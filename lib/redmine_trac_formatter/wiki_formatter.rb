@@ -180,6 +180,22 @@ module RedmineTracFormatter
 
       return t 
     end
+
+    def test_parsing(expected, wikitext)
+      orig = @text
+      @text = wikitext
+      re = Oniguruma::ORegexp.new('\s+$')
+      result = parse_trac_wiki
+      @text = orig
+      if re.gsub(result, '') == re.gsub(expected, '')
+        puts "SUCCESS: #{wikitext.gsub(/[\r\n]/, "\\n")}"
+      else
+        puts "ERROR:\n"
+        puts "Original:  #{wikitext}\n"
+        puts "Expected:  #{expected}\n"
+        puts "Formatted: #{result}"
+      end
+    end
   end
 end
 
@@ -187,9 +203,16 @@ end
 if __FILE__ == $0
   f = RedmineTracFormatter::WikiFormatter.new
 
-  f.text = "This '''bold''' and ** bold ** ''italic'' and //italic// '''''test''''' (**//!WikiCreole style//**) but this !'''''is not bold or italics!'''''."
-  t = f.parse_trac_wiki
-  
-  puts "Original:  #{f.text}"
-  puts "Formatted: #{t}"
+  t = <<EOS
+This is a '''bold''' and ** bold ** ''italic'' 
+and //italic// '''''test''''' (**//!WikiCreole style//**)
+but this !'''''is not bold or italics!'''''.
+EOS
+  x = <<EOS
+This is a <strong>bold</strong> and <strong> bold </strong> <em>italic</em>
+and <em>italic</em> <strong><em>test</em></strong> (<strong><em>!WikiCreole style</em></strong>)
+but this !'''''is not bold or italics!'''''.
+EOS
+
+  f.test_parsing(x, t)
 end
