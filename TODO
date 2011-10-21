@@ -1,0 +1,2 @@
+app/helpers/redmine_trac_formatter/helper.rb
+assets/javascripts/trac.js

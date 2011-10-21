@@ -1,0 +1,41 @@
+= Redmine Trac Wiki Formatter
+
+This is a redmine plugin that supports Trac-style wiki markup
+within Redmine.  This makes it easier for those that would like
+to "upgrade" from Trac to Redmine without losing an existing wiki
+or those who are using Redmine but prefer Trac's wiki formatting
+over that of Redmine's
+
+== License
+This work is released under the Apache Software License, version 2.0.
+See LICENSE for more information.
+
+== What is Redmine?
+Redmine is a flexible project management web application.
+See ((<the official site|URL:http://www.redmine.org>)) for more details.
+
+== What is Trac?
+Trac is a ticket tracking system that has many built-in features
+including a source code browser, integrated wiki, etc.
+See ((<<the official site|URL:http://trac.edgewall.org/)) for more details
+
+== Plugin installation
+=== Prerequisites
+* Redmine and its prerequisites
+* On Ruby 1.8 you'll need Oniguruma - http://oniguruma.rubyforge.org/
+
+=== Installation
+(1) Copy the plugin directory into the vendor/plugins directory
+(2) Start Redmine
+
+Installed plugins are listed on 'Admin -> Information' screen.
+
+== Future Plans
+* finishing support of all Trac markup (tables, etc) 
+
+== Thank You To
+* A big thank you to Yuki Sonoda (Yugui: https://github.com/yugui)
+  for providing the patch that modularized formatting within Redmine
+  (http://www.redmine.org/issues/2025)
+  and providing the template that I imitate to create this plugin.
+  (https://github.com/yugui/redmine_rd_formatter)
