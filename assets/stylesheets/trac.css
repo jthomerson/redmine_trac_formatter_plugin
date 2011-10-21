@@ -3,6 +3,9 @@
 .jstb_em {
 	background-image: url(../images/jstoolbar/bt_em.png);
 }
+.jstb_bold {
+	background-image: url(../images/jstoolbar/bt_bold.png);
+}
 .jstb_code {
 	background-image: url(../images/jstoolbar/bt_code.png);
 }

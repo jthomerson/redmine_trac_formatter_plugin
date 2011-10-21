@@ -1,2 +1,2 @@
-app/helpers/redmine_trac_formatter/helper.rb
-assets/javascripts/trac.js
+./assets/help/trac_syntax.html
+   make this a narrow cheatsheet to help with the syntax
