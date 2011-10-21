@@ -1,5 +1,6 @@
 jsToolBar.strings = {};
 jsToolBar.strings['Emphasized'] = '強調';
+jsToolBar.strings['Bold'] = '太字';
 jsToolBar.strings['Code'] = 'コード';
 jsToolBar.strings['Keyboard'] = 'キーボード入力';
 jsToolBar.strings['Variable'] = '可変部分';

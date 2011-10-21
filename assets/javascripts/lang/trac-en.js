@@ -1,0 +1,15 @@
+jsToolBar.strings = {};
+jsToolBar.strings['Emphasized'] = 'Emphasized';
+jsToolBar.strings['Bold'] = 'Bold';
+jsToolBar.strings['Code'] = 'Code';
+jsToolBar.strings['Keyboard'] = 'Keyboard';
+jsToolBar.strings['Variable'] = 'Variable';
+jsToolBar.strings['Heading 1'] = 'Heading 1';
+jsToolBar.strings['Heading 2'] = 'Heading 2';
+jsToolBar.strings['Heading 3'] = 'Heading 3';
+jsToolBar.strings['Unordered list'] = 'Unordered List';
+jsToolBar.strings['Ordered list'] = 'Ordered List';
+jsToolBar.strings['Preformatted'] = 'Preformatted';
+jsToolBar.strings['Un-preformatted'] = 'Un-preformatted';
+jsToolBar.strings['Wiki link'] = 'Wiki Link';
+jsToolBar.strings['Image'] = 'Image';

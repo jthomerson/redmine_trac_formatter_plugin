@@ -170,6 +170,7 @@ module RedmineTracFormatter
       ### MISCELLANEOUS
       # TODO:
       #Line [[br]] break 
+      Oniguruma::ORegexp.new('(?<!!)\[\[[Bb][Rr]\]\]').gsub!(t, '<br />')
       #Line \\ break
       #----
       #<p>
