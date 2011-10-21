@@ -4,7 +4,7 @@ require 'redmine'
 RAILS_DEFAULT_LOGGER.info 'Starting Trac formatter for Redmine'
 
 Redmine::Plugin.register :redmine_trac_formatter do
-  name 'Trac formatter'
+  name 'redmine_trac_formatter'
   author 'Jeremy Thomerson (jthomerson)'
   description 'This provides Trac markup as a wiki format'
   version '0.0.1'
