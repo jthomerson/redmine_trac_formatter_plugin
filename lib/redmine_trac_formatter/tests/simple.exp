@@ -1,0 +1,8 @@
+<p>This is a <strong>bold</strong> and <strong> bold </strong> <em>italic</em>
+and <em>italic</em> <strong><em>test</em></strong> (<strong><em>!WikiCreole style</em></strong>)
+but this !'''''is not bold or italics!'''''.
+This is <span class="underline">underlined text</span>.</p>
+<p>This is in a new paragraph.<br />
+And another hard-break preceded this line, which is followed by a horizontal rule
+<hr /></p>
+<p></p>

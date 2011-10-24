@@ -1,0 +1,9 @@
+<p>This is a line followed by a hard break<br />
+<strong>PRE BLOCK:</strong>
+<pre class="wiki">This is
+   some preformatted text
+
+ '''That does not get wiki-parsed'''
+</pre><strong>But this</strong> <em>does</em> get parsed <tt>And this '''doesn't'''</tt>
+And <tt>this text is ''monospaced'' too</tt>
+</p>

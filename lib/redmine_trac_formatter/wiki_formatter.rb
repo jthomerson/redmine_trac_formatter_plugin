@@ -31,6 +31,7 @@ module RedmineTracFormatter
 
       formatted = ""
       parse_line = true
+      block_ending = ""
       next_ending = ""
       tmp_buffer = ""
 
@@ -39,14 +40,30 @@ module RedmineTracFormatter
 
         # PREFORMATTED TEXT (END MULTI-LINE BLOCK)
         # TODO: lookbehind for negation !
-        if !parse_line && t =~ /^(.*?)\}\}\}(.*)$/
+        if !parse_line && block_ending == "}}}" && t =~ /^(.*?)\}\}\}(.*)$/
           parse_line = true # start normal parsing again
+          block_ending = ""
           t = $2 # only parse stuff after }}}
           formatted += "#{tmp_buffer}#{$1}</pre>" # add buffer and ending to formatted text
           tmp_buffer = '' # reset buffer
         end
 
-        unless parse_line
+        # TABLES LINE CONTINUES
+        if !parse_line && block_ending == "||"
+          # we were parsing a table
+          if t =~ /^\|\|.*/
+            # another table line
+            tmp_buffer += parse_table_line(t)
+            next
+          else
+            formatted += tmp_buffer + "</tbody>\n</table>\n"
+            parse_line = true
+            tmp_buffer = ""
+            block_ending = ""
+          end
+        end
+
+        if !parse_line
           tmp_buffer += "#{t}"
           next
         end
@@ -63,15 +80,6 @@ module RedmineTracFormatter
           next
         end
 
-        ### PREFORMATTED TEXT
-        #{{{
-        #multiple lines, ''no wiki''
-        #      white space respected
-        #}}}
-        #<pre class="wiki">multiple lines, ''no wiki''
-        #      white space respected
-        #</pre>
-
         # First parse preformatted text appearing all inline
         ### MONOSPACE
         # `this text`
@@ -85,12 +93,39 @@ module RedmineTracFormatter
           next
         end
 
+        ### PREFORMATTED TEXT
+        #{{{
+        #multiple lines, ''no wiki''
+        #      white space respected
+        #}}}
+        #<pre class="wiki">multiple lines, ''no wiki''
+        #      white space respected
+        #</pre>
+
         # Now do multi-line preformatted text parsing
         # TODO: lookbehind for negation !
         if t =~ /^(.*?)\{\{\{(.*)$/
-          parse_line = false # don't parse lines until we find the end
+          parse_line = false   # don't parse lines until we find the end
+          block_ending = "}}}" # so our code above knows we're buffering preformatted text
           t = $1 # parse everything before {{{ just like you normally would
           tmp_buffer = "<pre class=\"wiki\">#{$2}\n" # store everything after in a temp buffer until }}} found
+        end
+
+        ### TABLES
+        #||= Table Header =|| Cell ||
+        #||||  (details below)  ||
+        #<table class="wiki">
+        #<tr><th> Table Header </th><td> Cell 
+        #</td></tr><tr><td colspan="2" style="text-align: center">  (details below)  
+        #</td></tr></table>
+        #
+        if t =~ /^\|\|(.*)\|\|\s*$/
+          # TODO: allow for trailing backslash to continue tr on next line
+          parse_line = false   # don't parse lines until we find the end
+          block_ending = "||"  # so our code above knows we're buffering a table
+          t = "" # don't parse anything else on this line
+          tmp_buffer = "<table class=\"wiki\">\n<tbody>\n" # start the table 
+          tmp_buffer += parse_table_line($1)
         end
 
         t = parse_one_line_markup(t)
@@ -142,16 +177,6 @@ module RedmineTracFormatter
         #(he replied)
         #</p>
         #</blockquote>
-        #
-
-        ### TABLES
-        # TODO:
-        #||= Table Header =|| Cell ||
-        #||||  (details below)  ||
-        #<table class="wiki">
-        #<tr><th> Table Header </th><td> Cell 
-        #</td></tr><tr><td colspan="2" style="text-align: center">  (details below)  
-        #</td></tr></table>
         #
 
         ### LINKS
@@ -207,7 +232,35 @@ module RedmineTracFormatter
       return formatted
     end
 
+    def parse_table_line(t)
+      t = t.chomp.gsub(/^\s*\|\|(.*)\|\|\s*$/, '\1')
+      ret = ""
+      t.each("||") { |cell|
+        cell.gsub!(/\|\|\s*$/, '')
+        boundary = "td"
+        style = ""
+        contents = cell
+        if cell =~ /^=(.*)=$/
+          boundary = "th"
+          contents = $1
+        end
+        if contents =~ /^\S/
+          style=" style='text-align: left'"
+        elsif contents =~ /.*\S$/
+          style=" style='text-align: right'"
+        end
+        contents = parse_one_line_markup(contents)
+        ret += "<#{boundary}#{style}>#{contents}</#{boundary}>"
+      }
+      return "<tr>#{ret}</tr>\n"
+    end
+
     def parse_one_line_markup(t)
+      # LINKS
+      # we don't directly create links but instead double the brackets so Redmine can parse them for us
+      # TODO: this isn't working....  Redmine must parse links separately or before this.  need to investigate
+      # Oniguruma::ORegexp.new('(?<!!)\[(.+?)(?<!!)\]').gsub!(t, '[[\1]]')
+
       # FONT STYLES
       # Wikipedia style:
       Oniguruma::ORegexp.new('(?<!!)\'\'\'\'\'(.+?)(?<!!)\'\'\'\'\'').gsub!(t, '<strong><em>\1</em></strong>')
@@ -236,31 +289,17 @@ module RedmineTracFormatter
       ### MISCELLANEOUS
       #Line [[br]] break 
       #Line <br /> break
-      Oniguruma::ORegexp.new('(?<!!)\[\[[Bb][Rr]\]\]').gsub!(t, '<br />')
+      t.gsub!(/\[\[[Bb][Rr]\]\]/, '<br />')
+      # Oniguruma::ORegexp.new('(?<!!)\[\[[Bb][Rr]\]\]').gsub!(t, '<br />')
       #Line \\ break
       #Line <br /> break
-      Oniguruma::ORegexp.new('(?<!!)\\\\').gsub!(t, '<br />')
+      t.gsub!(/\\\\/, '<br />')
+      # Oniguruma::ORegexp.new('(?<!!)\\\\\\').gsub!(t, '<br />')
       #----
       #<hr />
       t.gsub!(/^[\s]*----[\s]*$/, '<hr />')
 
       return t
-    end
-
-    def test_parsing(expected, wikitext)
-      orig = @text
-      @text = wikitext
-      re = Oniguruma::ORegexp.new('\s+$')
-      result = parse_trac_wiki
-      @text = orig
-      if re.gsub(result, '') == re.gsub(expected, '')
-        puts "SUCCESS: #{wikitext.gsub(/[\r\n]/, "\\n")}"
-      else
-        puts "ERROR:\n"
-        puts "Original:  #{wikitext}\n"
-        puts "Expected:  #{expected}\n"
-        puts "Formatted: #{result}"
-      end
     end
   end
 end
@@ -269,50 +308,16 @@ end
 if __FILE__ == $0
   f = RedmineTracFormatter::WikiFormatter.new
 
-  t = <<EOS
-This is a '''bold''' and ** bold ** ''italic'' 
-and //italic// '''''test''''' (**//!WikiCreole style//**)
-but this !'''''is not bold or italics!'''''.
-This is __underlined text__.
+  infile = ARGV[0]
+  expfile = ARGV[1]
 
-This is in a new paragraph.\\
-And another hard-break preceded this line, which is followed by a horizontal rule
-----
-EOS
-  x = <<EOS
-<p>This is a <strong>bold</strong> and <strong> bold </strong> <em>italic</em>
-and <em>italic</em> <strong><em>test</em></strong> (<strong><em>!WikiCreole style</em></strong>)
-but this !'''''is not bold or italics!'''''.
-This is <span class="underline">underlined text</span>.</p>
-<p>This is in a new paragraph.<br />
-And another hard-break preceded this line, which is followed by a horizontal rule
-<hr />
-</p>
-EOS
+  file = File.open("#{infile}", "rb")
+  input = file.read
+  f.text = input
+  output = f.parse_trac_wiki
 
-  f.test_parsing(x, t)
+  outfile = '/tmp/test.output'
+  File.open(outfile, 'w') {|f| f.write(output) }
 
-  t = <<EOS
-This is a line followed by a hard break[[BR]]
-'''PRE BLOCK:'''{{{This is
-   some preformatted text
-
- '''That does not get wiki-parsed'''
-}}}'''But this''' ''does'' get parsed {{{And this '''doesn't'''}}}
-And `this text is ''monospaced'' too`
-EOS
-  x = <<EOS
-<p>This is a line followed by a hard break<br />
-<strong>PRE BLOCK:</strong>
-<pre class="wiki">This is
-   some preformatted text
-
- '''That does not get wiki-parsed'''
-</pre><strong>But this</strong> <em>does</em> get parsed <tt>And this '''doesn't'''</tt>
-And <tt>this text is ''monospaced'' too</tt>
-</p>
-EOS
-
-  f.test_parsing(x, t)
-
+  exec "diff #{expfile} #{outfile}" 
 end

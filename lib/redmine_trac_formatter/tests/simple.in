@@ -1,0 +1,9 @@
+This is a '''bold''' and ** bold ** ''italic'' 
+and //italic// '''''test''''' (**//!WikiCreole style//**)
+but this !'''''is not bold or italics!'''''.
+This is __underlined text__.
+
+This is in a new paragraph.\\
+And another hard-break preceded this line, which is followed by a horizontal rule
+----
+

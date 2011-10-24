@@ -1,0 +1,19 @@
+<p>This is a line followed by a hard break<br />
+<strong>PRE BLOCK:</strong>
+<pre class="wiki">This is
+   some preformatted text
+
+ '''That does not get wiki-parsed'''
+</pre><strong>But this</strong> <em>does</em> get parsed <tt>And this '''doesn't'''</tt>
+And <tt>this text is ''monospaced'' too</tt></p>
+<p>
+<table class="wiki">
+<tbody>
+<tr><td> <strong>Bold cell</strong> </td><th> header cell </th><td> <em>italics cell</em> </td></tr>
+<tr><td style='text-align: left'>Left-aligned cell </td><td> Center-aligned cell </td><td style='text-align: right'> and right-aligned</td></tr>
+<tr><td> </td><td> only cell this row </td><td> </td></tr>
+</tbody>
+</table>
+this is not in a table</p>
+<p>and this is a paragraph
+</p>

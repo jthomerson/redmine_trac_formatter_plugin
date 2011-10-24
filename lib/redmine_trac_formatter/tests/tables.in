@@ -1,0 +1,14 @@
+This is a line followed by a hard break[[BR]]
+'''PRE BLOCK:'''{{{This is
+   some preformatted text
+
+ '''That does not get wiki-parsed'''
+}}}'''But this''' ''does'' get parsed {{{And this '''doesn't'''}}}
+And `this text is ''monospaced'' too`
+
+|| '''Bold cell''' ||= header cell =|| ''italics cell'' ||
+||Left-aligned cell || Center-aligned cell || and right-aligned||
+|| || only cell this row || ||
+this is not in a table
+
+and this is a paragraph
