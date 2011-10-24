@@ -1,0 +1,20 @@
+<p><h1>Test H1</h1>
+Simple bulleted list:</p>
+<p>
+<ul>
+  <li><strong>Point 1</strong>
+
+  </li>
+  <li>Point 2
+
+ <ul>
+   <li><em>Sub-point 2.1</em>
+   </li>
+   <li>Sub-point 2.2
+   </li>
+ </ul>
+  </li>
+  <li>Point 3
+  </li>
+</ul>
+</p>

@@ -34,6 +34,7 @@ module RedmineTracFormatter
       block_ending = ""
       next_ending = ""
       tmp_buffer = ""
+      @list_levels = []
 
       text.each { |t|
         # look for things that end temp buffering blocks
@@ -63,6 +64,17 @@ module RedmineTracFormatter
           end
         end
 
+        ### LISTS (END MULTI-LINE BLOCK)
+        if !parse_line && block_ending == "LI"
+          if is_list_line(t)
+            formatted += parse_list_line(t)
+          else
+            parse_line = true  # don't parse lines until we find the end
+            block_ending = ""  # so our code above knows we're buffering a list
+            formatted += end_list(true)
+          end
+        end
+
         if !parse_line
           tmp_buffer += "#{t}"
           next
@@ -86,7 +98,7 @@ module RedmineTracFormatter
         # <tt>this text</tt>
         # {{{this text}}}
         # <tt>this text</tt>
-        if t =~ /(.*?)([^!]?)`(.+?[^!]?)`(.*)/ || t =~ /(.*?)([^!]?)\{\{\{(.+?[^!]?)\}\}\}(.*)/ 
+        if t =~ /(.*?)([^!]?)`(.+?[^!]?)`(.*)/ || t =~ /(.*?)([^!]?)\{\{\{(.+?[^!]?)\}\}\}(.*)/
           formatted += parse_one_line_markup("#{$1}#{$2}")
           formatted += "<tt>#{$3}</tt>"
           formatted += parse_one_line_markup($4) + "\n"
@@ -115,8 +127,8 @@ module RedmineTracFormatter
         #||= Table Header =|| Cell ||
         #||||  (details below)  ||
         #<table class="wiki">
-        #<tr><th> Table Header </th><td> Cell 
-        #</td></tr><tr><td colspan="2" style="text-align: center">  (details below)  
+        #<tr><th> Table Header </th><td> Cell
+        #</td></tr><tr><td colspan="2" style="text-align: center">  (details below)
         #</td></tr></table>
         #
         if t =~ /^\|\|(.*)\|\|\s*$/
@@ -124,26 +136,31 @@ module RedmineTracFormatter
           parse_line = false   # don't parse lines until we find the end
           block_ending = "||"  # so our code above knows we're buffering a table
           t = "" # don't parse anything else on this line
-          tmp_buffer = "<table class=\"wiki\">\n<tbody>\n" # start the table 
+          tmp_buffer = "<table class=\"wiki\">\n<tbody>\n" # start the table
           tmp_buffer += parse_table_line($1)
         end
 
-        t = parse_one_line_markup(t)
-
         ### LISTS
-        # TODO:
         #* bullets list
         #  on multiple lines
         #  1. nested list
-        #    a. different numbering 
+        #    a. different numbering
         #       styles
-        # 
+        #
         #<ul><li>bullets list
         #on multiple lines
         #<ol><li>nested list
         #<ol class="loweralpha"><li>different numbering
         #styles
         #</li></ol></li></ol></li></ul>
+        if is_list_line(t)
+          parse_line = false   # don't parse lines until we find the end
+          block_ending = "LI"  # so our code above knows we're buffering a list
+          formatted += parse_list_line(t)
+          t = "" # don't parse anything else on this line
+        end
+
+        t = parse_one_line_markup(t)
 
         ### DEFINITION LISTS
         # TODO:
@@ -188,13 +205,13 @@ module RedmineTracFormatter
         #[=#point1 (1)] First...
         #<span class="wikianchor" id="point1">(1)</span> First...
         #see [#point1 (1)]
-        #see <a class="wiki" href="/wiki/WikiFormatting#point1">(1)</a> 
+        #see <a class="wiki" href="/wiki/WikiFormatting#point1">(1)</a>
         #
 
         ### IMAGES
         # TODO:
         #[[Image(link)]]	
-        #<a style="padding:0; border:none" href="/chrome/site/../common/trac_logo_mini.png"><img src="/chrome/site/../common/trac_logo_mini.png" alt="trac_logo_mini.png" title="trac_logo_mini.png" /></a> 
+        #<a style="padding:0; border:none" href="/chrome/site/../common/trac_logo_mini.png"><img src="/chrome/site/../common/trac_logo_mini.png" alt="trac_logo_mini.png" title="trac_logo_mini.png" /></a>
         #
 
         ### MACROS
@@ -255,6 +272,90 @@ module RedmineTracFormatter
       return "<tr>#{ret}</tr>\n"
     end
 
+    def is_list_line(t)
+      return t =~ /^(\s*)(\*|[0-9a-zA-Z])\.? (.*)/
+    end
+
+    def parse_list_line(t)
+      #* bullets list
+      #  on multiple lines
+      #  1. nested list
+      #    a. different numbering
+      #       styles
+      #
+      #<ul><li>bullets list
+      #on multiple lines
+      #<ol><li>nested list
+      #<ol class="loweralpha"><li>different numbering
+      #styles
+      #</li></ol></li></ol></li></ul>
+
+      t.chomp!
+      ret = ""
+      t =~ /^(\s*)(\*|[0-9a-zA-Z])\.? (.*)/
+      last_num_spaces = 0
+      spaces = $1
+      num_spaces = $1.length
+      type = $2
+      contents = $3
+      last_num_spaces = @list_levels.empty? ? 0 : @list_levels.last[0]
+      started_new = false
+
+      if @list_levels.empty? || @list_levels.last[0] < num_spaces
+        started_new = true
+        # starting a new (or deeper) level
+        if type =~ /\*\.?/
+          @list_levels.push([ num_spaces, "ul" ])
+          ret += "\n#{spaces}<ul>\n"
+        elsif type =~ /[0-9]\.?/
+          @list_levels.push([ num_spaces, "ol" ])
+          ret += "\n#{spaces}<ol>\n"
+        elsif type =~ /[a-z]\.?/
+          @list_levels.push([ num_spaces, "loweralpha" ])
+          ret += "\n#{spaces}<ol class='loweralpha'>\n"
+        elsif type =~ /[A-Z]\.?/
+          @list_levels.push([ num_spaces, "upperalpha" ])
+          ret += "\n#{spaces}<ol class='upperalpha'>\n"
+        end
+      end
+
+      if !started_new
+        ret += (" " * @list_levels.last[0]) + "  </li>\n"
+      end
+
+      if last_num_spaces > num_spaces
+        # ended previous list
+        ret += (" " * last_num_spaces) + end_list
+      end
+
+      contents = parse_one_line_markup(contents)
+      ret += "#{spaces}  <li>#{contents}\n"
+
+      return ret
+    end
+
+    def end_list(all = false, ret = "")
+      num_spaces, list_type = @list_levels.pop
+      if all
+        ret += (" " * num_spaces) + "  </li>\n"
+      end
+      if list_type == "ul"
+        ret += "</ul>\n"
+      else
+        ret += "</ol>\n"
+      end
+      if !@list_levels.empty?
+        # this was a nested list, so add ending li tag
+        ret += (" " * @list_levels.last[0]) + "  </li>\n"
+      end
+      if all
+        while !@list_levels.empty?
+          ret = end_list(false, ret)
+        end
+      end
+      return ret
+    end
+
     def parse_one_line_markup(t)
       # LINKS
       # we don't directly create links but instead double the brackets so Redmine can parse them for us
@@ -275,11 +376,8 @@ module RedmineTracFormatter
       # Italics:
       Oniguruma::ORegexp.new('(?<![\'!])\'\'(.+?)(?<![\'!])\'\'').gsub!(t, '<em>\1</em>')
       Oniguruma::ORegexp.new('(?<!!)//(.+?)(?<!!)//').gsub!(t, '<em>\1</em>')
-      # TODO: need monospacing with markup within monospace markers ignored
 
       # HEADINGS
-      # all headings (TODO: see if we can do this better using the scan method
-      #                     and count number of equals signs to determine heading num)
       Oniguruma::ORegexp.new('(?<!!)===== (.+?)(?<!!) =====').gsub!(t, '<h5>\1</h5>')
       Oniguruma::ORegexp.new('(?<!!)==== (.+?)(?<!!) ====').gsub!(t, '<h4>\1</h4>')
       Oniguruma::ORegexp.new('(?<!!)=== (.+?)(?<!!) ===').gsub!(t, '<h3>\1</h3>')
@@ -287,7 +385,7 @@ module RedmineTracFormatter
       Oniguruma::ORegexp.new('(?<!!)= (.+?)(?<!!) =').gsub!(t, '<h1>\1</h1>')
 
       ### MISCELLANEOUS
-      #Line [[br]] break 
+      #Line [[br]] break
       #Line <br /> break
       t.gsub!(/\[\[[Bb][Rr]\]\]/, '<br />')
       # Oniguruma::ORegexp.new('(?<!!)\[\[[Bb][Rr]\]\]').gsub!(t, '<br />')
@@ -310,6 +408,7 @@ if __FILE__ == $0
 
   infile = ARGV[0]
   expfile = ARGV[1]
+  showdiff = ARGV.length > 2 ? true : false
 
   file = File.open("#{infile}", "rb")
   input = file.read
@@ -319,5 +418,10 @@ if __FILE__ == $0
   outfile = '/tmp/test.output'
   File.open(outfile, 'w') {|f| f.write(output) }
 
-  exec "diff #{expfile} #{outfile}" 
+  redirect = showdiff ? "" : " > /dev/null 2>&1"
+  system "diff #{expfile} #{outfile} #{redirect}"
+  if !showdiff && $? != 0
+    puts "ERROR: #{infile}"
+  end
+  exit $?
 end

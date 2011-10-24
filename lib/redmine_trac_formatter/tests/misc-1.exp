@@ -1,0 +1,25 @@
+<p><h1>heading 1</h1>
+this is a test<br />
+hard break above</p>
+<p>hr here:
+<hr /></p>
+<p><h2>heading 2</h2></p>
+<p>
+<table class="wiki">
+<tbody>
+<tr><td style='text-align: left'>td 1, la </td><th> th </th><td> <strong>bold td</strong> </td></tr>
+<tr><td style='text-align: left'>td 1, la </td><th> th </th><td> <strong>bold td</strong> </td></tr>
+<tr><td style='text-align: left'>td 1, la </td><th> th </th><td> <strong>bold td</strong> </td></tr>
+</tbody>
+</table></p>
+<p></p>
+<p>
+<pre class="wiki">
+multi-line text
+ ''' not parsed '''
+
+</pre></p>
+<p></p>
+<p></p>
+<p>this is a new paragraph</p>
+<p></p>

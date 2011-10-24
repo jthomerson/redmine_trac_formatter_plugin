@@ -1,0 +1,17 @@
+<p><h1>Test H1</h1>
+Bulleted list:</p>
+<p>
+<ul>
+  <li>Point 1
+
+
+   <ol class='upperalpha'>
+     <li>(upperalpha) Sub-point 1.1
+     </li>
+     <li>(upperalpha) Sub-point 1.2
+     </li>
+</ol>
+  </li>
+</ul></p>
+<p>List ended
+</p>
