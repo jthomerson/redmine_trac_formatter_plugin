@@ -1,0 +1,16 @@
+<p>Here are some simple links:
+<a class="external" href="http://github.com">GitHub</a><br />
+<a class="external" href="http://github.com">http://github.com</a><br />
+<a class="external" href="http://github.com/jthomerson/redmine_trac_formatter_plugin">Redmine Trac Formatter Plugin</a><br />
+[[SomePage|Some Page on the Wiki]]<br />
+[[SomePage]]<br />
+[[SomePage]] and see [[SomePage]]<br />
+[[SomePage|Some Page on the Wiki]]<br />
+![SomePage Some Page on the Wiki]<br />
+#7112 or #7112 both link to issue number 7112<br />
+{40} or report:40 both link to report forty<br />
+r123 or r123 or r123 all link to changeset number 123<br />
+attachment:example.tgz links to an attachment on this page<br />
+source:trunk/README links to the README file in trunk<br />
+source:trunk/README@200#L25 links to version 200, line 25 of the same file<br />
+</p>

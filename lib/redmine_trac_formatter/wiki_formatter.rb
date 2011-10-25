@@ -195,18 +195,6 @@ module RedmineTracFormatter
         #</blockquote>
         #
 
-        ### LINKS
-        # TODO: (do we need to do them or does it already handle them?)
-        # ALSO: TRACLINKS
-        #
-        ### SETTING ANCHORS
-        # TODO:
-        #[=#point1 (1)] First...
-        #<span class="wikianchor" id="point1">(1)</span> First...
-        #see [#point1 (1)]
-        #see <a class="wiki" href="/wiki/WikiFormatting#point1">(1)</a>
-        #
-
         ### MACROS
         # TODO: probably won't do this unless redmine has it built in
         #[[MacroList(*)]] becomes a list of all available macros
@@ -389,9 +377,72 @@ module RedmineTracFormatter
       Oniguruma::ORegexp.new('(?<!!)\[\[Image\((.*?)\)\]\]').gsub!(t, '<a style="padding: 0; border: none" href="\1"><img src="\1" /></a>')
 
       # LINKS
-      # we don't directly create links but instead double the brackets so Redmine can parse them for us
-      # TODO: this isn't working....  Redmine must parse links separately or before this.  need to investigate
-      # Oniguruma::ORegexp.new('(?<!!)\[(.+?)(?<!!)\]').gsub!(t, '[[\1]]')
+      # for external links, we directly create the link tags.  But for other (redmine) links,
+      # rather than directly creating and parsing links we allow redmine to do it.
+      # All we do for these is translate trac link syntax into redmine link syntax
+      # Examples:
+      # TRAC: [wiki:SomePage Some Page on the Wiki][[br]]
+      # RM:   [[SomePage|Some Page on the Wiki]]<br />
+      # TRAC: [wiki:SomePage][[br]]
+      # RM:   [[SomePage]]<br />
+      # TRAC: #7112 or ticket:7112 both link to issue number 7112[[br]]
+      # RM:   #7112 or #7112 both link to issue number 7112<br />
+      # TRAC: {40} or report:40 both link to report forty[[br]]
+      # RM:   I don't know if there is an equivalent.
+      # TRAC: r123 or [123] or changeset:123 all link to changeset number 123[[br]]
+      # RM:   r123 or r123 or r123 all link to changeset number 123<br />
+      # TRAC: attachment:example.tgz links to an attachment on this page[[br]]
+      # RM:   NO CHANGE
+      # source:trunk/README links to the README file in trunk[[br]]
+      # RM:   NO CHANGE
+      # source:trunk/README@200#L25 links to version 200, line 25 of the same file[[br]]
+      # RM:   NO CHANGE
+
+      # First, external links that we create link tags for ourselves:
+      # TRAC: [http://github.com GitHub]
+      # RM:   "GitHub":http://github.com<br />
+      # TRAC: [http://github.com/jthomerson/redmine_trac_formatter_plugin Redmine Trac Formatter Plugin][[br]]
+      # RM:   "Redmine Trac Formatter Plugin":[http://github.com/jthomerson/redmine_trac_formatter_plugin<br />
+      Oniguruma::ORegexp.new('(?<!!)\[((?:https?://)|(?:s?ftps?://)|(?:www\.))(\S+)\s?(.*?)\]').gsub!(t) do
+        text = ($3 == "" || $3 == nil) ? "#{$1}#{$2}" : $3
+        %(<a class="external" href="#{$1}#{$2}">#{text}</a>)
+      end
+
+      # Now, other [bracketed] links:
+      t.gsub!(/(.?)\[([a-z]+:)?([^\s\]]+)\s?(.*?)\]/) do
+        all, negator, type, dest, text = $&, $1, $2, $3, $4
+        # For testing: puts "negator: #{negator}, type: #{type}, dest: #{dest}, text: #{text}, all: |#{all}|"
+        type = (type == nil ? "" : type.gsub(/:$/, ''))
+        result = ""
+        if negator =~ /!/
+          # user didn't want this one to be a link
+          result = all
+        end
+
+        # The following link types don't appear to allow descriptive text in redmine
+        # and just become "attachment:example.tgz"
+        if result == "" && ['source', 'attachment'].include?(type)
+          result = "#{negator}#{type}:#{dest}"
+        end
+
+        # handle revisions/changesets like [123]
+        if result == "" && dest =~ /^[0-9]+$/
+          result = "#{negator}r#{dest}"
+        end
+
+        # default fall-through (for wiki: and unknown type links):
+        if result == ""
+          result = "#{negator}[[#{dest}#{text == '' ? '' : '|' + text}]]"
+        end
+        "#{result}"
+      end
+
+      # now other special-case links:
+      # changeset:123 should become r123
+      Oniguruma::ORegexp.new('(?<!!)changeset:([0-9]+)').gsub!(t, 'r\1')
+
+      # ticket:123 should become #123
+      Oniguruma::ORegexp.new('(?<!!)ticket:([0-9]+)').gsub!(t, '#\1')
 
       return t
     end
