@@ -1,0 +1,3 @@
+<p>This is some <strong>bold</strong> text that comes before an image on the next line:<br />
+<a style="padding: 0; border: none" href="test.png"><img src="test.png" /></a>
+</p>

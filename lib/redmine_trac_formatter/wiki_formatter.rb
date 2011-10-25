@@ -80,13 +80,12 @@ module RedmineTracFormatter
           next
         end
 
-        # trim string to make white-space only line an empty line and use our
-        # own newlines as needed
-        t.strip!
+        # remove the newline from the end of our lines:
+        t.chomp!
 
         ### PARAGRAPHS (empty line becomes end of paragraph and start of new paragraph)
         # TODO: duplicate new lines should probably not open and close empty paragraphs
-        if "" == t
+        if "" == t.strip
           formatted.chomp!
           formatted += "</p>\n<p>"
           next
@@ -208,12 +207,6 @@ module RedmineTracFormatter
         #see <a class="wiki" href="/wiki/WikiFormatting#point1">(1)</a>
         #
 
-        ### IMAGES
-        # TODO:
-        #[[Image(link)]]	
-        #<a style="padding:0; border:none" href="/chrome/site/../common/trac_logo_mini.png"><img src="/chrome/site/../common/trac_logo_mini.png" alt="trac_logo_mini.png" title="trac_logo_mini.png" /></a>
-        #
-
         ### MACROS
         # TODO: probably won't do this unless redmine has it built in
         #[[MacroList(*)]] becomes a list of all available macros
@@ -289,11 +282,9 @@ module RedmineTracFormatter
       #<ol class="loweralpha"><li>different numbering
       #styles
       #</li></ol></li></ol></li></ul>
-
       t.chomp!
       ret = ""
       t =~ /^(\s*)(\*|[0-9a-zA-Z])\.? (.*)/
-      last_num_spaces = 0
       spaces = $1
       num_spaces = $1.length
       type = $2
@@ -301,7 +292,7 @@ module RedmineTracFormatter
       last_num_spaces = @list_levels.empty? ? 0 : @list_levels.last[0]
       started_new = false
 
-      if @list_levels.empty? || @list_levels.last[0] < num_spaces
+      if @list_levels.empty? || last_num_spaces < num_spaces
         started_new = true
         # starting a new (or deeper) level
         if type =~ /\*\.?/
@@ -357,11 +348,6 @@ module RedmineTracFormatter
     end
 
     def parse_one_line_markup(t)
-      # LINKS
-      # we don't directly create links but instead double the brackets so Redmine can parse them for us
-      # TODO: this isn't working....  Redmine must parse links separately or before this.  need to investigate
-      # Oniguruma::ORegexp.new('(?<!!)\[(.+?)(?<!!)\]').gsub!(t, '[[\1]]')
-
       # FONT STYLES
       # Wikipedia style:
       Oniguruma::ORegexp.new('(?<!!)\'\'\'\'\'(.+?)(?<!!)\'\'\'\'\'').gsub!(t, '<strong><em>\1</em></strong>')
@@ -396,6 +382,16 @@ module RedmineTracFormatter
       #----
       #<hr />
       t.gsub!(/^[\s]*----[\s]*$/, '<hr />')
+
+      ### IMAGES
+      #[[Image(link)]]
+      #<a style="padding:0; border:none" href="/chrome/site/../common/trac_logo_mini.png"><img src="/chrome/site/../common/trac_logo_mini.png" alt="trac_logo_mini.png" title="trac_logo_mini.png" /></a>
+      Oniguruma::ORegexp.new('(?<!!)\[\[Image\((.*?)\)\]\]').gsub!(t, '<a style="padding: 0; border: none" href="\1"><img src="\1" /></a>')
+
+      # LINKS
+      # we don't directly create links but instead double the brackets so Redmine can parse them for us
+      # TODO: this isn't working....  Redmine must parse links separately or before this.  need to investigate
+      # Oniguruma::ORegexp.new('(?<!!)\[(.+?)(?<!!)\]').gsub!(t, '[[\1]]')
 
       return t
     end
