@@ -349,7 +349,7 @@ module RedmineTracFormatter
 
       # Italics:
       Oniguruma::ORegexp.new('(?<![\'!])\'\'(.+?)(?<![\'!])\'\'').gsub!(t, '<em>\1</em>')
-      Oniguruma::ORegexp.new('(?<!!)//(.+?)(?<!!)//').gsub!(t, '<em>\1</em>')
+      Oniguruma::ORegexp.new('(?<![!:])//(.+?)(?<!!)//').gsub!(t, '<em>\1</em>')
 
       # HEADINGS
       Oniguruma::ORegexp.new('(?<!!)===== (.+?)(?<!!) =====').gsub!(t, '<h5>\1</h5>')

@@ -1,5 +1,6 @@
 <p>Here are some simple links:
 <a class="external" href="http://github.com">GitHub</a><br />
+<a class="external" href="http://github.com">GitHub</a> and <a class="external" href="http://code.google.com">Google Code</a><br />
 <a class="external" href="http://github.com">http://github.com</a><br />
 <a class="external" href="http://github.com/jthomerson/redmine_trac_formatter_plugin">Redmine Trac Formatter Plugin</a><br />
 [[SomePage|Some Page on the Wiki]]<br />
