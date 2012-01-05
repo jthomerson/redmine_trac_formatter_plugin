@@ -374,7 +374,7 @@ module RedmineTracFormatter
       ### IMAGES
       #[[Image(link)]]
       #<a style="padding:0; border:none" href="/chrome/site/../common/trac_logo_mini.png"><img src="/chrome/site/../common/trac_logo_mini.png" alt="trac_logo_mini.png" title="trac_logo_mini.png" /></a>
-      Oniguruma::ORegexp.new('(?<!!)\[\[Image\((.*?)\)\]\]').gsub!(t, '<a style="padding: 0; border: none" href="\1"><img src="\1" /></a>')
+      Oniguruma::ORegexp.new('(?<!!)\[\[Image\((.*?)(, (.*?))?\)\]\]').gsub!(t, '<a style="padding: 0; border: none" href="\1" \3><img src="\1" \3 /></a>')
 
       # LINKS
       # for external links, we directly create the link tags.  But for other (redmine) links,
