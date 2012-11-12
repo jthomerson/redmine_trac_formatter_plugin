@@ -3,7 +3,7 @@ module RedmineTracFormatter
     unloadable
 
     def wikitoolbar_for(field_id)
-      file = Engines::RailsExtensions::AssetHelpers.plugin_asset_path('redmine_trac_formatter', 'help', 'trac_syntax.html')
+      file = 'http://trac.edgewall.org/wiki/WikiFormatting#Cheatsheet'
       help_link = l(:setting_text_formatting) + ': ' +
       link_to(l(:label_help), file,
               :onclick => "window.open(\"#{file}\", \"\", \"resizable=yes, location=no, width=300, height=640, menubar=no, status=no, scrollbars=yes\"); return false;")
