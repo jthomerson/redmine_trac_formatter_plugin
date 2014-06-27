@@ -1,5 +1,4 @@
 require 'rubygems'
-require 'oniguruma'
 
 module RedmineTracFormatter
   class WikiFormatter
@@ -36,7 +35,7 @@ module RedmineTracFormatter
       tmp_buffer = ""
       @list_levels = []
 
-      text.each { |t|
+      text.each_line { |t|
         # look for things that end temp buffering blocks
 
         # PREFORMATTED TEXT (END MULTI-LINE BLOCK)
@@ -225,7 +224,7 @@ module RedmineTracFormatter
         #
 
         formatted += "#{t}\n"
-      } # end of each block over string lines
+      } # end of each_line block over string lines
 
       return formatted
     end
@@ -233,7 +232,7 @@ module RedmineTracFormatter
     def parse_table_line(t)
       t = t.chomp.gsub(/^\s*\|\|(.*)\|\|\s*$/, '\1')
       ret = ""
-      t.each("||") { |cell|
+      t.each_line("||") { |cell|
         cell.gsub!(/\|\|\s*$/, '')
         boundary = "td"
         style = ""
@@ -338,35 +337,35 @@ module RedmineTracFormatter
     def parse_one_line_markup(t)
       # FONT STYLES
       # Wikipedia style:
-      Oniguruma::ORegexp.new('(?<!!)\'\'\'\'\'(.+?)(?<!!)\'\'\'\'\'').gsub!(t, '<strong><em>\1</em></strong>')
+      t.gsub!(/(?<!!)\'\'\'\'\'(.+?)(?<!!)\'\'\'\'\'/, '<strong><em>\1</em></strong>')
 
       # Bold:
-      Oniguruma::ORegexp.new('(?<![\'!])\'\'\'(.+?)(?<![\'!])\'\'\'').gsub!(t, '<strong>\1</strong>')
-      Oniguruma::ORegexp.new('(?<!!)\*\*(.+?)(?<!!)\*\*').gsub!(t, '<strong>\1</strong>')
+      t.gsub!(/(?<![\'!])\'\'\'(.+?)(?<![\'!])\'\'\'/, '<strong>\1</strong>')
+      t.gsub!(/(?<!!)\*\*(.+?)(?<!!)\*\*/, '<strong>\1</strong>')
 
       # Underline:
-      Oniguruma::ORegexp.new('(?<!!)\_\_(.+?)(?<!!)\_\_').gsub!(t, '<span class="underline">\1</span>')
+      t.gsub!(/(?<!!)\_\_(.+?)(?<!!)\_\_/, '<span class="underline">\1</span>')
 
       # Italics:
-      Oniguruma::ORegexp.new('(?<![\'!])\'\'(.+?)(?<![\'!])\'\'').gsub!(t, '<em>\1</em>')
-      Oniguruma::ORegexp.new('(?<![!:])//(.+?)(?<!!)//').gsub!(t, '<em>\1</em>')
+      t.gsub!(/(?<![\'!])\'\'(.+?)(?<![\'!])\'\'/, '<em>\1</em>')
+      t.gsub!(/(?<![!:])\/\/(.+?)(?<!!)\/\//, '<em>\1</em>')
 
       # HEADINGS
-      Oniguruma::ORegexp.new('(?<!!)===== (.+?)(?<!!) =====').gsub!(t, '<h5>\1</h5>')
-      Oniguruma::ORegexp.new('(?<!!)==== (.+?)(?<!!) ====').gsub!(t, '<h4>\1</h4>')
-      Oniguruma::ORegexp.new('(?<!!)=== (.+?)(?<!!) ===').gsub!(t, '<h3>\1</h3>')
-      Oniguruma::ORegexp.new('(?<!!)== (.+?)(?<!!) ==').gsub!(t, '<h2>\1</h2>')
-      Oniguruma::ORegexp.new('(?<!!)= (.+?)(?<!!) =').gsub!(t, '<h1>\1</h1>')
+      t.gsub!(/(?<!!)===== (.+?)(?<!!) =====/, '<h5>\1</h5>')
+      t.gsub!(/(?<!!)==== (.+?)(?<!!) ====/, '<h4>\1</h4>')
+      t.gsub!(/(?<!!)=== (.+?)(?<!!) ===/, '<h3>\1</h3>')
+      t.gsub!(/(?<!!)== (.+?)(?<!!) ==/, '<h2>\1</h2>')
+      t.gsub!(/(?<!!)= (.+?)(?<!!) =/, '<h1>\1</h1>')
 
       ### MISCELLANEOUS
       #Line [[br]] break
       #Line <br /> break
       t.gsub!(/\[\[[Bb][Rr]\]\]/, '<br />')
-      # Oniguruma::ORegexp.new('(?<!!)\[\[[Bb][Rr]\]\]').gsub!(t, '<br />')
+      # t.gsub!(/(?<!!)\[\[[Bb][Rr]\]\]/, '<br />')
       #Line \\ break
       #Line <br /> break
       t.gsub!(/\\\\/, '<br />')
-      # Oniguruma::ORegexp.new('(?<!!)\\\\\\').gsub!(t, '<br />')
+      # t.gsub!(/(?<!!)\\\\\\/, '<br />')
       #----
       #<hr />
       t.gsub!(/^[\s]*----[\s]*$/, '<hr />')
@@ -374,7 +373,7 @@ module RedmineTracFormatter
       ### IMAGES
       #[[Image(link)]]
       #<a style="padding:0; border:none" href="/chrome/site/../common/trac_logo_mini.png"><img src="/chrome/site/../common/trac_logo_mini.png" alt="trac_logo_mini.png" title="trac_logo_mini.png" /></a>
-      Oniguruma::ORegexp.new('(?<!!)\[\[Image\((.*?)(, (.*?))?\)\]\]').gsub!(t, '<a style="padding: 0; border: none" href="\1" \3><img src="\1" \3 /></a>')
+      t.gsub!(/(?<!!)\[\[Image\((.*?)(, (.*?))?\)\]\]/, '<a style="padding: 0; border: none" href="\1" \3><img src="\1" \3 /></a>')
 
       # LINKS
       # for external links, we directly create the link tags.  But for other (redmine) links,
@@ -403,7 +402,7 @@ module RedmineTracFormatter
       # RM:   "GitHub":http://github.com<br />
       # TRAC: [http://github.com/jthomerson/redmine_trac_formatter_plugin Redmine Trac Formatter Plugin][[br]]
       # RM:   "Redmine Trac Formatter Plugin":[http://github.com/jthomerson/redmine_trac_formatter_plugin<br />
-      Oniguruma::ORegexp.new('(?<!!)\[((?:https?://)|(?:s?ftps?://)|(?:www\.))(\S+)\s?(.*?)\]').gsub!(t) do
+      t.gsub!(/(?<!!)\[((?:https?:\/\/)|(?:s?ftps?:\/\/)|(?:www\.))(\S+)\s?(.*?)\]/) do
         text = ($3 == "" || $3 == nil) ? "#{$1}#{$2}" : $3
         %(<a class="external" href="#{$1}#{$2}">#{text}</a>)
       end
@@ -439,10 +438,10 @@ module RedmineTracFormatter
 
       # now other special-case links:
       # changeset:123 should become r123
-      Oniguruma::ORegexp.new('(?<!!)changeset:([0-9]+)').gsub!(t, 'r\1')
+      t.gsub!(/(?<!!)changeset:([0-9]+)/, 'r\1')
 
       # ticket:123 should become #123
-      Oniguruma::ORegexp.new('(?<!!)ticket:([0-9]+)').gsub!(t, '#\1')
+      t.gsub!(/(?<!!)ticket:([0-9]+)/, '#\1')
 
       return t
     end

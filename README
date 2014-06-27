@@ -22,7 +22,6 @@ See ((<<the official site|URL:http://trac.edgewall.org/)) for more details
 == Plugin installation
 === Prerequisites
 * Redmine and its prerequisites
-* On Ruby 1.8 you'll need Oniguruma - http://oniguruma.rubyforge.org/
 
 === Installation
 (1) Copy the plugin directory into the vendor/plugins directory
